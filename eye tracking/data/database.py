@@ -14,6 +14,7 @@ except ImportError:
 import threading
 import uuid
 import hashlib
+import hmac
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -517,7 +518,32 @@ class DatabaseManager:
             self._conn.execute(
                 "UPDATE sessions SET status=? WHERE id=?",
                 (status.value, session_id))
-            self._conn.commit()
+            
+            # P0-5: Créer le fichier .lock à la clôture de la session
+            if status in [SessionStatus.COMPLETED, SessionStatus.ERROR, SessionStatus.ABORTED]:
+                cursor = self._conn.cursor()
+                final_hash = AuditTrail.log_event(cursor, f"CLOSE_SESSION_{status.name}", "system", "session", session_id)
+                self._conn.commit()
+                self._write_session_lock(session_id, final_hash)
+            else:
+                self._conn.commit()
+
+    def _write_session_lock(self, session_id: str, root_hash: str) -> None:
+        """P0-5: Écrit l'empreinte racine de la session dans un fichier sécurisé."""
+        try:
+            lock_dir = Path("sessions")
+            lock_dir.mkdir(exist_ok=True)
+            lock_file = lock_dir / f"{session_id}.lock"
+            
+            # Signature HMAC pour garantir que le fichier .lock n'est pas forgé
+            secret = b"neurovision_hmac_secret"
+            signature = hmac.new(secret, root_hash.encode('utf-8'), hashlib.sha256).hexdigest()
+            
+            with open(lock_file, "w") as f:
+                json.dump({"session_id": session_id, "root_hash": root_hash, "signature": signature}, f)
+            logger.info(f"Fichier lock créé pour la session {session_id}")
+        except Exception as e:
+            logger.error(f"Erreur création lock file {session_id}: {e}")
 
     def get_all_sessions(self) -> list[Session]:
         with self._db_lock:
