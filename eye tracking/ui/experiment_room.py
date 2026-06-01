@@ -908,6 +908,32 @@ class ExperimentRoom(QWidget):
         # ── 1. Arrêter CamoCamWorker (source des frames) ──
         if self._camo_worker:
             self._camo_worker.stop()
+            
+            # P1-3: Vérification de la validité scientifique (Frame drop)
+            if self._current_session:
+                total_frames = getattr(self._camo_worker, '_total_frames', 0)
+                dropped_frames = getattr(self._camo_worker, 'dropped_frames', 0)
+                if total_frames > 0:
+                    drop_rate = dropped_frames / total_frames
+                    if drop_rate > 0.15:  # MAX_DROP_RATE
+                        logger.warning(f"Session {self._current_session.id} invalidée: drop rate {drop_rate:.1%} > 15%")
+                        from core.audit_trail import AuditTrail
+                        try:
+                            # Marquer session en warning dans DB
+                            self._db.update_session_status(self._current_session.id, SessionStatus.ABORTED) # Ou un nouveau status WARNING si existant
+                            with self._db._db_lock:
+                                cursor = self._db._conn.cursor()
+                                AuditTrail.log_event(cursor, "INVALID_SESSION_QUALITY", "system", "session", self._current_session.id, {"drop_rate": drop_rate, "dropped": dropped_frames, "total": total_frames})
+                                self._db._conn.commit()
+                        except Exception as e:
+                            logger.error(f"Erreur d'audit INVALID_SESSION_QUALITY: {e}")
+                        
+                        NeuroAlert.warning(
+                            "Validité Scientifique Compromise",
+                            f"Le taux de perte d'images ({drop_rate:.1%}) a dépassé le seuil critique (15%).\n"
+                            "L'intégrité de cette session est invalidée.",
+                            parent=self)
+            
             # Délégation au ThreadManager
             self._camo_worker = None
 
