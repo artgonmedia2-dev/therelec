@@ -282,17 +282,14 @@ class FacialCoder:
                 )
 
         except Exception as e:
-            logger.warning(f"DeepFace erreur inattendue: {e}")
-            return FacialSample(
-                timestamp_ms=ts, session_id=sid, stimulus_id=stim,
-                face_detected=False,
-            )
+            logger.warning(f"DeepFace erreur inattendue: {e}, fallback vers OpenCV Haar")
+            self._quality_degraded = True
+            return self._analyze_opencv(frame, sid, stim, ts)
 
         if result is None or not face_region:
-            return FacialSample(
-                timestamp_ms=ts, session_id=sid, stimulus_id=stim,
-                face_detected=False,
-            )
+            logger.warning("DeepFace: aucun résultat, fallback vers OpenCV Haar")
+            self._quality_degraded = True
+            return self._analyze_opencv(frame, sid, stim, ts)
 
         # ── 3. Extraire le crop et les scores (CNN PyTorch) ──
         # On utilise le frame_resized car les coordonnées de face_region correspondent à celui-ci
