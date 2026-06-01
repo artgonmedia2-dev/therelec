@@ -1,0 +1,48 @@
+# ============================================================
+# Eye Tracking Neuromarketing - Dependencies
+# Python 3.11+ required
+# ============================================================
+
+# GUI
+PyQt6>=6.6.0
+PyQt6-Qt6>=6.6.0
+PyQt6-sip>=13.6.0
+
+# Computer Vision & Eye Tracking
+opencv-python>=4.8.0
+mediapipe>=0.10.30
+# tobii-research>=1.10.2  # Uncomment when Tobii hardware is available
+
+# Data Processing
+numpy>=1.24.0
+pandas>=2.1.0
+scipy>=1.11.0
+
+# Visualization
+matplotlib>=3.8.0
+seaborn>=0.13.0
+pyqtgraph>=0.13.3
+
+# Database
+pysqlcipher3==1.2.1
+# Reporting & Export
+reportlab>=4.0.0
+
+# Facial Coding (Neuromarketing)
+deepface>=0.0.93
+# fer>=22.5.1  # Optional lighter alternative
+
+# Configuration
+PyYAML>=6.0.1
+
+# Packaging
+# pyinstaller>=6.0.0  # Install separately for packaging
+
+# Development / Testing
+pytest>=7.4.0
+pytest-qt>=4.2.0
+pyrefly>=1.0.0
+
+# API
+fastapi>=0.100.0
+uvicorn>=0.23.0
