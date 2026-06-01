@@ -186,6 +186,8 @@ class DatabaseManager:
                     calibration_error_deg REAL DEFAULT 0.0,
                     tracker_type TEXT DEFAULT 'webcam',
                     notes TEXT DEFAULT '',
+                    last_heartbeat TEXT DEFAULT NULL,
+                    dropped_frames_count INTEGER DEFAULT 0,
                     FOREIGN KEY (participant_id) REFERENCES participants(id),
                     FOREIGN KEY (protocol_id) REFERENCES protocols(id)
                 );
@@ -323,7 +325,42 @@ class DatabaseManager:
                     details TEXT
                 );
             """)
+            
+            # --- P1-1: Migrations (ajout des colonnes si elles manquent) ---
+            try:
+                self._conn.execute("ALTER TABLE sessions ADD COLUMN last_heartbeat TEXT DEFAULT NULL")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                self._conn.execute("ALTER TABLE sessions ADD COLUMN dropped_frames_count INTEGER DEFAULT 0")
+            except sqlite3.OperationalError:
+                pass
+            
             self._conn.commit()
+            
+            # --- P1-1: Recovery check ---
+            self._recover_interrupted_sessions()
+            
+    def _recover_interrupted_sessions(self) -> None:
+        """P1-1: Marque les sessions orphelines comme interrompues."""
+        try:
+            with self._db_lock:
+                # Si status=running mais last_heartbeat vieux de + de 30s ou None, c'est un crash
+                from datetime import datetime, timezone
+                now_str = datetime.now(timezone.utc).isoformat()
+                
+                # En SQLite pur, c'est compliqué de calculer la diff de temps ISO8601.
+                # On récupère toutes les sessions RUNNING et on check en Python.
+                cursor = self._conn.execute("SELECT id, last_heartbeat FROM sessions WHERE status='running'")
+                rows = cursor.fetchall()
+                for row in rows:
+                    # Dans le doute, si on démarre, aucune session ne devrait être RUNNING
+                    session_id = row["id"]
+                    self._conn.execute("UPDATE sessions SET status='aborted' WHERE id=?", (session_id,))
+                    logger.warning(f"Crash Recovery: Session {session_id} orpheline marquée comme ABORTED.")
+                self._conn.commit()
+        except Exception as e:
+            logger.error(f"Erreur Crash Recovery: {e}")
 
     # ----- Audit Trail -----
     def verify_chain_integrity(self) -> Tuple[bool, Optional[int]]:
@@ -499,11 +536,11 @@ class DatabaseManager:
         proto_id = s.protocol_id if s.protocol_id else None
         with self._db_lock:
             self._conn.execute(
-                "INSERT INTO sessions VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO sessions VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (s.id, s.participant_id, proto_id, s.experimenter_id,
                  s.status.value, s.started_at, s.ended_at,
                  s.calibration_error_px, s.calibration_error_deg,
-                 s.tracker_type, s.notes))
+                 s.tracker_type, s.notes, s.last_heartbeat, s.dropped_frames_count))
             
             # Log de l'audit
             cursor = self._conn.cursor()
@@ -545,6 +582,15 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Erreur création lock file {session_id}: {e}")
 
+    def update_session_heartbeat(self, session_id: str, last_heartbeat: str, dropped_frames: int) -> None:
+        """P1-1: Met à jour le heartbeat et le compteur de drops."""
+        with self._db_lock:
+            self._conn.execute(
+                "UPDATE sessions SET last_heartbeat=?, dropped_frames_count=? WHERE id=?",
+                (last_heartbeat, dropped_frames, session_id)
+            )
+            self._conn.commit()
+
     def get_all_sessions(self) -> list[Session]:
         with self._db_lock:
             rows = self._conn.execute("SELECT * FROM sessions ORDER BY started_at DESC").fetchall()
@@ -555,7 +601,9 @@ class DatabaseManager:
             started_at=r["started_at"], ended_at=r["ended_at"],
             calibration_error_px=r["calibration_error_px"],
             calibration_error_deg=r["calibration_error_deg"],
-            tracker_type=r["tracker_type"], notes=r["notes"]) for r in rows]
+            tracker_type=r["tracker_type"], notes=r["notes"],
+            last_heartbeat=r["last_heartbeat"], dropped_frames_count=r["dropped_frames_count"]
+        ) for r in rows]
 
     def get_session(self, session_id: str) -> Optional[Session]:
         with self._db_lock:
@@ -570,7 +618,9 @@ class DatabaseManager:
             started_at=row["started_at"], ended_at=row["ended_at"],
             calibration_error_px=row["calibration_error_px"],
             calibration_error_deg=row["calibration_error_deg"],
-            tracker_type=row["tracker_type"], notes=row["notes"])
+            tracker_type=row["tracker_type"], notes=row["notes"],
+            last_heartbeat=row["last_heartbeat"], dropped_frames_count=row["dropped_frames_count"]
+        )
 
     # ----- Gaze Samples (batch optimisé) -----
     def insert_gaze_samples_batch(self, samples: list[GazeSample], commit: bool = True) -> int:
