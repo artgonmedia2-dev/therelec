@@ -8,6 +8,7 @@ import CTABanner from "@/components/home/CTABanner"
 import FAQSection from "@/components/home/FAQSection"
 import ContactFormSection from "@/components/home/ContactFormSection"
 import CertificationsSection from "@/components/home/CertificationsSection"
+import PartnersSection from "@/components/home/PartnersSection"
 
 export const metadata: Metadata = {
   title: "Therelec — Électricien & Climatisation à Neuilly-sur-Seine | Devis Gratuit",
@@ -25,6 +26,7 @@ export default function HomePage() {
       <WhyUsSection />
       <ProcessSection />
       <CertificationsSection />
+      <PartnersSection />
       <CTABanner />
       <FAQSection />
       <ContactFormSection />
