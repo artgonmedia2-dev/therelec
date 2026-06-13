@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import React, { useState, useEffect } from "react"
 import Link from "next/link"
@@ -14,6 +14,7 @@ import {
   Building2,
   ChevronDown,
   FileText,
+  ShieldCheck,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -31,28 +32,25 @@ const navLinks = [
     ],
   },
   { href: "/realisations", label: "Réalisations" },
-  { href: "/certifications", label: "Certifications" },
+  { href: "/certifications", label: "Certifications", icon: ShieldCheck },
   { href: "/avis", label: "Avis clients" },
-  { href: "/zone-intervention", label: "Zone d'intervention" },
-  { href: "/faq", label: "FAQ" },
+  { href: "/zone-intervention", label: "Zone" },
   { href: "/blog", label: "Blog" },
 ]
 
 export default function Header() {
-  const [isScrolled, setIsScrolled] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [servicesOpen, setServicesOpen] = useState(false)
   const pathname = usePathname()
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20)
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
+    const onScroll = () => setScrolled(window.scrollY > 10)
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
-  useEffect(() => {
-    setMobileOpen(false)
-  }, [pathname])
+  useEffect(() => { setMobileOpen(false) }, [pathname])
 
   return (
     <>
@@ -65,44 +63,32 @@ export default function Header() {
 
       <header
         className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-          isScrolled
-            ? "bg-white/95 backdrop-blur-md shadow-md border-b border-gray-100"
-            : "bg-transparent"
+          "fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100 transition-shadow duration-300",
+          scrolled ? "shadow-md" : "shadow-sm"
         )}
         role="banner"
       >
         <div className="container-site">
-          <div className="flex items-center justify-between h-16 md:h-20">
-            {/* Logo */}
+          <div className="flex items-center justify-between h-16 md:h-20 gap-4">
+
+            {/* ── Logo ── */}
             <Link
               href="/"
-              className="flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#04599c] rounded"
+              className="flex items-center shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#04599c] rounded-lg"
               aria-label="Therelec — Accueil"
             >
-              {/* Sur fond sombre (hero non scrollé) : logo avec fond blanc arrondi */}
-              {/* Sur fond blanc (scrollé) : logo direct */}
-              <div
-                className={cn(
-                  "transition-all duration-300",
-                  isScrolled
-                    ? "bg-transparent p-0 rounded-none"
-                    : "bg-white rounded-xl p-1"
-                )}
-              >
-                <Image
-                  src="/logo.png"
-                  alt="Therelec — Génie Électrique et Climatique"
-                  width={140}
-                  height={56}
-                  className="h-12 w-auto object-contain"
-                  priority
-                />
-              </div>
+              <Image
+                src="/logo.png"
+                alt="Therelec — Génie Électrique et Climatique"
+                width={140}
+                height={56}
+                className="h-10 md:h-12 w-auto object-contain"
+                priority
+              />
             </Link>
 
-            {/* Desktop Nav */}
-            <nav className="hidden lg:flex items-center gap-1" aria-label="Navigation principale">
+            {/* ── Desktop Nav ── */}
+            <nav className="hidden lg:flex items-center gap-0.5 flex-1 justify-center" aria-label="Navigation principale">
               {navLinks.map((link) =>
                 link.dropdown ? (
                   <div
@@ -113,18 +99,13 @@ export default function Header() {
                   >
                     <button
                       className={cn(
-                        "flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                        isScrolled
-                          ? "text-gray-700 hover:text-[#04599c] hover:bg-[#04599c]/5"
-                          : "text-gray-200 hover:text-white hover:bg-white/10"
+                        "flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-gray-700 hover:text-[#04599c] hover:bg-[#04599c]/5"
                       )}
                       aria-expanded={servicesOpen}
                       aria-haspopup="true"
                     >
                       {link.label}
-                      <ChevronDown
-                        className={cn("w-4 h-4 transition-transform", servicesOpen && "rotate-180")}
-                      />
+                      <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", servicesOpen && "rotate-180")} />
                     </button>
 
                     {servicesOpen && (
@@ -141,9 +122,7 @@ export default function Header() {
                                 <Icon className="w-4 h-4 text-[#04599c]" />
                               </div>
                               <div>
-                                <p className="font-semibold text-gray-900 text-sm group-hover:text-[#04599c]">
-                                  {item.label}
-                                </p>
+                                <p className="font-semibold text-gray-900 text-sm group-hover:text-[#04599c]">{item.label}</p>
                                 <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
                               </div>
                             </Link>
@@ -157,33 +136,32 @@ export default function Header() {
                     key={link.href}
                     href={link.href}
                     className={cn(
-                      "px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                      "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                       pathname === link.href
-                        ? isScrolled
-                          ? "text-[#04599c] bg-[#04599c]/10"
-                          : "text-white bg-white/20"
-                        : isScrolled
-                        ? "text-gray-700 hover:text-[#04599c] hover:bg-[#04599c]/5"
-                        : "text-gray-200 hover:text-white hover:bg-white/10"
+                        ? "text-[#04599c] bg-[#04599c]/10"
+                        : "text-gray-700 hover:text-[#04599c] hover:bg-[#04599c]/5",
+                      link.href === "/certifications" && "font-semibold"
                     )}
                   >
+                    {link.href === "/certifications" && (
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                    )}
                     {link.label}
                   </Link>
                 )
               )}
             </nav>
 
-            {/* CTA Zone */}
-            <div className="hidden lg:flex items-center gap-3">
+            {/* ── Right CTA ── */}
+            <div className="hidden lg:flex items-center gap-2 shrink-0">
               <a
                 href="tel:+33699699428"
-                className={cn(
-                  "flex items-center gap-2 text-sm font-semibold transition-colors",
-                  isScrolled ? "text-gray-700 hover:text-[#04599c]" : "text-white hover:text-[#FFB800]"
-                )}
+                className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-[#04599c] transition-colors px-2 py-2 rounded-lg hover:bg-gray-50"
                 aria-label="Appeler Therelec"
               >
-                <Phone className="w-4 h-4" />
+                <div className="w-7 h-7 bg-[#04599c]/10 rounded-lg flex items-center justify-center">
+                  <Phone className="w-3.5 h-3.5 text-[#04599c]" />
+                </div>
                 <span>06 99 69 94 28</span>
               </a>
               <Button asChild size="sm" variant="accent">
@@ -194,24 +172,18 @@ export default function Header() {
               </Button>
             </div>
 
-            {/* Mobile: Phone + Hamburger */}
+            {/* ── Mobile controls ── */}
             <div className="flex lg:hidden items-center gap-2">
               <a
                 href="tel:+33699699428"
-                className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center",
-                  isScrolled ? "bg-[#04599c] text-white" : "bg-white/20 text-white"
-                )}
+                className="w-9 h-9 rounded-xl bg-[#04599c] text-white flex items-center justify-center"
                 aria-label="Appeler Therelec"
               >
                 <Phone className="w-4 h-4" />
               </a>
               <button
                 onClick={() => setMobileOpen(!mobileOpen)}
-                className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center",
-                  isScrolled ? "text-gray-700 hover:bg-gray-100" : "text-white hover:bg-white/10"
-                )}
+                className="w-9 h-9 rounded-xl text-gray-700 hover:bg-gray-100 flex items-center justify-center"
                 aria-label={mobileOpen ? "Fermer le menu" : "Ouvrir le menu"}
                 aria-expanded={mobileOpen}
               >
@@ -222,62 +194,45 @@ export default function Header() {
         </div>
       </header>
 
-      {/* Mobile Menu */}
+      {/* ── Mobile Menu ── */}
       {mobileOpen && (
-        <div
-          className="fixed inset-0 z-40 lg:hidden"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Menu mobile"
-        >
-          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
-          <nav className="absolute top-0 right-0 bottom-0 w-80 max-w-full bg-white shadow-xl overflow-y-auto">
-            <div className="p-6 border-b border-gray-100">
-              <div className="mb-6">
-                <Image
-                  src="/logo.png"
-                  alt="Therelec — Génie Électrique et Climatique"
-                  width={140}
-                  height={56}
-                  className="h-12 w-auto object-contain"
-                />
-              </div>
+        <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Menu mobile">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <nav className="absolute top-0 right-0 bottom-0 w-80 max-w-full bg-white shadow-2xl overflow-y-auto">
 
-              <a
-                href="tel:+33699699428"
-                className="flex items-center gap-3 p-3 bg-[#04599c] text-white rounded-xl font-semibold mb-3"
-              >
+            {/* Mobile header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-100">
+              <Image src="/logo.png" alt="Therelec" width={120} height={48} className="h-10 w-auto object-contain" />
+              <button onClick={() => setMobileOpen(false)} className="w-9 h-9 rounded-xl text-gray-500 hover:bg-gray-100 flex items-center justify-center">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Quick actions */}
+            <div className="p-4 space-y-2 border-b border-gray-100">
+              <a href="tel:+33699699428" className="flex items-center gap-3 p-3 bg-[#04599c] text-white rounded-xl font-semibold">
                 <Phone className="w-5 h-5" />
                 <div>
-                  <p className="text-xs opacity-80">Appelez-nous</p>
-                  <p>06 99 69 94 28</p>
+                  <p className="text-xs opacity-75">Appelez-nous</p>
+                  <p className="font-bold">06 99 69 94 28</p>
                 </div>
               </a>
-
-              <Link
-                href="/contact"
-                className="flex items-center justify-center gap-2 p-3 bg-[#FFB800] text-[#0A1628] rounded-xl font-bold"
-              >
+              <Link href="/contact" className="flex items-center justify-center gap-2 p-3 bg-[#FFB800] text-[#0A1628] rounded-xl font-bold">
                 <FileText className="w-4 h-4" />
                 Devis gratuit
               </Link>
             </div>
 
+            {/* Nav links */}
             <div className="p-4">
               {navLinks.map((link) =>
                 link.dropdown ? (
-                  <div key="services" className="mb-1">
-                    <p className="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                      Services
-                    </p>
+                  <div key="services" className="mb-2">
+                    <p className="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">Services</p>
                     {link.dropdown.map((item) => {
                       const Icon = item.icon
                       return (
-                        <Link
-                          key={item.label}
-                          href={item.href}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors"
-                        >
+                        <Link key={item.label} href={item.href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors">
                           <Icon className="w-4 h-4 text-[#04599c]" />
                           <span className="font-medium text-gray-700">{item.label}</span>
                         </Link>
@@ -289,12 +244,11 @@ export default function Header() {
                     key={link.href}
                     href={link.href}
                     className={cn(
-                      "flex items-center px-3 py-2.5 rounded-lg font-medium transition-colors",
-                      pathname === link.href
-                        ? "bg-[#04599c]/10 text-[#04599c]"
-                        : "text-gray-700 hover:bg-gray-50"
+                      "flex items-center gap-2 px-3 py-2.5 rounded-xl font-medium transition-colors",
+                      pathname === link.href ? "bg-[#04599c]/10 text-[#04599c]" : "text-gray-700 hover:bg-gray-50"
                     )}
                   >
+                    {link.href === "/certifications" && <ShieldCheck className="w-4 h-4 text-[#04599c]" />}
                     {link.label}
                   </Link>
                 ) : null
@@ -302,27 +256,17 @@ export default function Header() {
               <Link
                 href="/"
                 className={cn(
-                  "flex items-center px-3 py-2.5 rounded-lg font-medium transition-colors",
-                  pathname === "/"
-                    ? "bg-[#04599c]/10 text-[#04599c]"
-                    : "text-gray-700 hover:bg-gray-50"
+                  "flex items-center px-3 py-2.5 rounded-xl font-medium transition-colors",
+                  pathname === "/" ? "bg-[#04599c]/10 text-[#04599c]" : "text-gray-700 hover:bg-gray-50"
                 )}
               >
                 Accueil
               </Link>
             </div>
 
+            {/* Footer links */}
             <div className="p-4 border-t border-gray-100 mt-auto">
-              <Link
-                href="/contact"
-                className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50"
-              >
-                Contact
-              </Link>
-              <Link
-                href="/mentions-legales"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-gray-50"
-              >
+              <Link href="/mentions-legales" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-gray-50">
                 Mentions légales
               </Link>
             </div>
