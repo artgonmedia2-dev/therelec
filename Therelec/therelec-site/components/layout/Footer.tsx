@@ -1,6 +1,6 @@
 ﻿import Link from "next/link"
 import Image from "next/image"
-import { Phone, Mail, MapPin, Clock, Award, Star, Shield } from "lucide-react"
+import { Phone, Mail, MapPin, Clock, Star } from "lucide-react"
 
 const footerServices = [
   { label: "Électricité générale", href: "/services/electricite" },
@@ -14,11 +14,21 @@ const footerServices = [
 const footerLinks = [
   { label: "Accueil", href: "/" },
   { label: "Réalisations", href: "/realisations" },
+  { label: "Certifications", href: "/certifications" },
   { label: "Avis clients", href: "/avis" },
   { label: "Zone d'intervention", href: "/zone-intervention" },
   { label: "FAQ", href: "/faq" },
   { label: "Blog", href: "/blog" },
   { label: "Contact", href: "/contact" },
+]
+
+const certLogos = [
+  { src: "/certifications/6-1.png", alt: "Qualifelec" },
+  { src: "/certifications/4-1.png", alt: "RGE QualiPac" },
+  { src: "/certifications/1-1.png", alt: "RGE Chauffage+" },
+  { src: "/certifications/2-1.png", alt: "RGE QualiSol" },
+  { src: "/certifications/3-1.png", alt: "RGE Quali'Bois" },
+  { src: "/certifications/5-1.png", alt: "RGE Ventilation+" },
 ]
 
 const legalLinks = [
@@ -47,25 +57,40 @@ export default function Footer() {
               </div>
             </Link>
 
-            <p className="text-gray-400 text-sm leading-relaxed mb-6">
-              Artisan certifié Qualifelec & RGE QualiPac, au service des particuliers et
+            <p className="text-gray-400 text-sm leading-relaxed mb-5">
+              Artisan certifié Qualifelec & 5 labels RGE, au service des particuliers et
               professionnels à Neuilly-sur-Seine et en Île-de-France depuis plus de 5 ans.
             </p>
 
-            {/* Certifications */}
-            <div className="flex flex-wrap gap-2 mb-6">
-              <div className="flex items-center gap-1.5 bg-white/10 rounded-lg px-3 py-2">
-                <Award className="w-4 h-4 text-[#FFB800]" />
-                <span className="text-xs font-semibold">Qualifelec 2025</span>
+            {/* Certification logos grid */}
+            <div className="mb-5">
+              <p className="text-gray-500 text-xs font-semibold uppercase tracking-widest mb-3">
+                Nos certifications
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {certLogos.map((logo) => (
+                  <Link
+                    key={logo.alt}
+                    href="/certifications"
+                    className="bg-white rounded-xl p-2 flex items-center justify-center hover:opacity-90 transition-opacity"
+                    title={logo.alt}
+                  >
+                    <Image
+                      src={logo.src}
+                      alt={logo.alt}
+                      width={100}
+                      height={44}
+                      className="w-full h-8 object-contain"
+                    />
+                  </Link>
+                ))}
               </div>
-              <div className="flex items-center gap-1.5 bg-white/10 rounded-lg px-3 py-2">
-                <Shield className="w-4 h-4 text-[#00B4D8]" />
-                <span className="text-xs font-semibold">RGE QualiPac</span>
-              </div>
-              <div className="flex items-center gap-1.5 bg-white/10 rounded-lg px-3 py-2">
-                <Star className="w-4 h-4 text-[#FFB800]" fill="#FFB800" />
-                <span className="text-xs font-semibold">4.9/5 Google</span>
-              </div>
+            </div>
+
+            {/* Google rating */}
+            <div className="flex items-center gap-1.5 bg-white/10 rounded-lg px-3 py-2 w-fit mb-6">
+              <Star className="w-4 h-4 text-[#FFB800]" fill="#FFB800" />
+              <span className="text-xs font-semibold">4.9/5 Google — 127 avis</span>
             </div>
           </div>
 

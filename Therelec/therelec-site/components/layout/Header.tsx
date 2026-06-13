@@ -31,6 +31,7 @@ const navLinks = [
     ],
   },
   { href: "/realisations", label: "Réalisations" },
+  { href: "/certifications", label: "Certifications" },
   { href: "/avis", label: "Avis clients" },
   { href: "/zone-intervention", label: "Zone d'intervention" },
   { href: "/faq", label: "FAQ" },
